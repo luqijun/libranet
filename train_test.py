@@ -43,7 +43,7 @@ def train_model(net, epoch, all_epoches, train_path, replay, optimizer, minerror
             print('[Epoch {:.2f}] {:.2f} / {:.2f}'.format(epoch, image_index, train_number))
                  
         image_name = train_img + str(image_index+1) +'.jpg'
-        img = cv2.imread(image_name) 
+        img = cv2.imread(image_name)  # 建议使用第五张图片调试
         dot_name = train_gt + str(image_index+1) + '.csv' 
         
         featuremap_t = []
@@ -86,7 +86,7 @@ def train_model(net, epoch, all_epoches, train_path, replay, optimizer, minerror
             mask_max_find = np.zeros((h, w))
             action_max = np.zeros((h, w))
                         
-            ##Exploration
+            ##Exploration action_max:筛选最优的action且执行action是大于0的  start_mask_random和end_ind_random分别用户筛选执行action后奖励大于0的操作
             for recycle_ind in range(0, parameters['ACTION_NUMBER']):
                 ##########################random##############################################
                 if recycle_ind < parameters['ACTION_NUMBER'] - 1:
@@ -116,17 +116,17 @@ def train_model(net, epoch, all_epoches, train_path, replay, optimizer, minerror
             error_every_action = abs(np.expand_dims(den, 0) - count_after_every_action)
             optimal_action_mid = error_every_action.argsort(axis=0)
             optimal_action = optimal_action_mid[0,:,:]
-            
+
             optimal_action[error_last<=parameters['ERROR_SYSTEM']] = parameters['ACTION_NUMBER'] - 1
             mask_select_end = (action_fusion == parameters['ACTION_NUMBER'] - 1).astype(np.int8)
             mask_now = mask_last.copy()
-            mask_now = mask_now | mask_select_end
+            mask_now = mask_now | mask_select_end # 获取新的mask
             
             count_rem = count_rem + (1 - mask_select_end) * (1 - mask_last) * (np.squeeze(net.A_mat_h_w[action_fusion.astype(np.int8)]))
             
-            error_now = abs(den - count_rem)  
+            error_now = abs(den - count_rem)  # 计算新的损失
             hv_next = hv_save.copy()
-            hv_next[:,:,step_hv] = action_fusion + 1            
+            hv_next[:,:,step_hv] = action_fusion + 1 # 存放历史动作数据
                         
             ##Reward computation
             if step_hv != parameters['HV_NUMBER'] - 1:
